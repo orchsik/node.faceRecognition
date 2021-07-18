@@ -1,12 +1,19 @@
+if (process.platform === "linux") {
+  // https://github.com/tensorflow/tfjs/tree/master/tfjs-node
+  // Windows Requires Python 2.7
+  // Mac OS X Requires Python 2.7 & Xcode
+  require("@tensorflow/tfjs-node");
+}
+
 const fs = require("fs");
 const path = require("path");
-const faceapi = require("face-api.js");
 const canvas = require("canvas");
+const faceapi = require("face-api.js");
 
 const MODEL_URL = `${__dirname}/face-models/`;
 const IMG_DIR = path.join(__dirname, "img");
 
-const fullFaceDescriptionFor = async ({ filename, label = "label" }) => {
+const fullFaceDescriptionFor = async ({ filename, label = "" }) => {
   const imgBuffer = fs.readFileSync(`${IMG_DIR}/${filename}`);
   // const input = await canvas.loadImage("./img/001.jpg"); // `src :string`으로 주면 한글 못 읽음.
   const img = await canvas.loadImage(imgBuffer); // `src :string`으로 주면 한글 못 읽음.
@@ -27,22 +34,33 @@ const fullFaceDescriptionFor = async ({ filename, label = "label" }) => {
   };
 };
 
-async function run() {
-  const label = "T00000001";
-  const fullFaceDescription_label = await fullFaceDescriptionFor({
-    filename: "진모1.jpg",
-    label: "T00000001",
+const getFaceMatcher = async () => {
+  const labelInfo = [
+    { filename: "진모1.jpg", label: "진모1" },
+    { filename: "진모2.jpg", label: "진모2" },
+  ];
+
+  const fullFaceDescriptions = await Promise.all(
+    labelInfo.map(({ filename, label }) =>
+      fullFaceDescriptionFor({ filename, label })
+    )
+  );
+  const labeledFaceDescriptors = fullFaceDescriptions.map((fd) => {
+    return new faceapi.LabeledFaceDescriptors(fd.label, [fd.descriptor]);
   });
-  const labeledFaceDescriptors = new faceapi.LabeledFaceDescriptors("PIVOT", [
-    fullFaceDescription_label.descriptor,
-  ]);
 
   const maxDescriptorDistance = 0.4;
   const faceMatcher = new faceapi.FaceMatcher(
     labeledFaceDescriptors,
     maxDescriptorDistance
   );
+  return faceMatcher;
+};
 
+async function run() {
+  const faceMatcher = await getFaceMatcher();
+
+  // const filenames = ['T00000001.jpg']
   const filenames = fs.readdirSync(IMG_DIR);
   const fullFaceDescriptions = await Promise.all(
     filenames.map((filename) => fullFaceDescriptionFor({ filename }))
