@@ -2,6 +2,7 @@ if (process.platform === "linux") {
   // https://github.com/tensorflow/tfjs/tree/master/tfjs-node
   // Windows Requires Python 2.7
   // Mac OS X Requires Python 2.7 & Xcode
+  console.log("\n[ Import tensorflow/tfjs-node ]");
   require("@tensorflow/tfjs-node");
 }
 
@@ -85,7 +86,7 @@ async function setup() {
     await faceapi.nets.ssdMobilenetv1.loadFromDisk(MODEL_URL);
     await faceapi.nets.faceLandmark68Net.loadFromDisk(MODEL_URL);
     await faceapi.nets.faceRecognitionNet.loadFromDisk(MODEL_URL);
-    console.log("Setup success\n============================");
+    console.log("\n[ Setup faceapi success ]");
   } catch (error) {
     console.error("setup", error);
   }
